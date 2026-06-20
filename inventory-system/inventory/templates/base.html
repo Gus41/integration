@@ -5,43 +5,147 @@
     <title>Inventory</title>
 
     <style>
-        body{
-            font-family: Arial, sans-serif;
-            max-width:900px;
-            margin:40px auto;
+        :root{
+            --max-width:1000px;
+            --bg:#f6f8fb;
+            --card:#ffffff;
+            --muted:#6b7280;
+            --accent:#0d6efd;
+            --danger:#dc3545;
+            --radius:8px;
         }
+
+        html,body{
+            height:100%;
+            margin:0;
+            padding:0;
+            background:var(--bg);
+            color:#111827;
+            font-family: Inter, Roboto, "Segoe UI", Arial, sans-serif;
+            -webkit-font-smoothing:antialiased;
+            -moz-osx-font-smoothing:grayscale;
+        }
+
+        .container{
+            max-width:var(--max-width);
+            margin:36px auto;
+            padding:24px;
+            background:var(--card);
+            border-radius:var(--radius);
+            box-shadow:0 6px 18px rgba(15,23,42,0.06);
+        }
+
+        header{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:16px;
+            margin-bottom:18px;
+        }
+
+        h1{
+            margin:0;
+            font-size:1.6rem;
+            letter-spacing:0.2px;
+        }
+
+        p.lead{color:var(--muted);margin:6px 0 0;font-size:0.95rem}
+
+        hr{border:none;border-top:1px solid #eef2f7;margin:18px 0}
+
+        .table-container{overflow:auto;border-radius:6px}
 
         table{
             width:100%;
-            border-collapse:collapse;
+            border-collapse:separate;
+            border-spacing:0;
+            min-width:600px;
+            font-size:0.95rem;
         }
 
-        th,td{
-            padding:10px;
-            border:1px solid #ddd;
+        th, td{
+            padding:12px 14px;
+            border-bottom:1px solid #eef2f6;
+            text-align:left;
+            vertical-align:middle;
         }
 
-        a{
-            text-decoration:none;
+        th{
+            background:#fbfdff;
+            color:#374151;
+            font-weight:600;
+            font-size:0.9rem;
         }
+
+        tr:nth-child(even) td{background:#fbfdff}
+        tr:hover td{background:#f1f9ff}
+
+        .actions{display:flex;gap:8px}
+
+        a{color:var(--accent);text-decoration:none}
 
         .btn{
+            display:inline-block;
             padding:8px 14px;
-            background:#0d6efd;
-            color:white;
-            border-radius:4px;
+            background:var(--accent);
+            color:#fff;
+            border-radius:6px;
+            border:none;
+            cursor:pointer;
+            text-decoration:none;
+            font-weight:600;
+            transition:background .12s ease, transform .06s ease;
+        }
+
+        .btn:hover{filter:brightness(.95);transform:translateY(-1px)}
+
+        .btn-secondary{background:#6b7280}
+        .btn-danger{background:var(--danger)}
+
+        form input[type="text"],
+        form input[type="number"],
+        form select,
+        form textarea{
+            width:100%;
+            padding:10px 12px;
+            border:1px solid #e6edf3;
+            border-radius:6px;
+            background:#fff;
+            box-sizing:border-box;
+            font-size:0.95rem;
+            margin-bottom:10px;
+        }
+
+        .muted{color:var(--muted);font-size:0.9rem}
+
+        @media (max-width:640px){
+            .container{margin:18px;padding:16px}
+            th,td{padding:10px}
+            table{min-width:480px}
+            h1{font-size:1.25rem}
         }
     </style>
 </head>
 
 <body>
 
-<h1>Inventory System</h1>
+<div class="container">
+    <header>
+        <div>
+            <h1>Inventory System</h1>
+            <p class="lead">Gerencie seus itens de forma simples e rápida.</p>
+        </div>
 
-<hr>
+        <div class="actions">
+            <a class="btn" href="{% url 'item_create' %}">Novo item</a>
+        </div>
+    </header>
 
-{% block content %}
-{% endblock %}
+    <hr>
+
+    {% block content %}
+    {% endblock %}
+</div>
 
 </body>
 </html>

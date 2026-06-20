@@ -2,6 +2,7 @@
 
 {% block content %}
 
+
 <h2>{{ title }}</h2>
 
 <form method="post">
@@ -9,9 +10,10 @@
 
     {{ form.as_p }}
 
-    <button type="submit">
-        Save
-    </button>
+    <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn" type="submit">Salvar</button>
+        <a class="btn btn-secondary" href="{% url 'item_list' %}">Cancelar</a>
+    </div>
 
 </form>
 

@@ -2,20 +2,18 @@
 
 {% block content %}
 
-<h2>Delete Item</h2>
 
-<p>Delete "{{ item.name }}"?</p>
+<h2>Excluir item</h2>
+
+<p>Excluir "{{ item.name }}"?</p>
 
 <form method="post">
     {% csrf_token %}
 
-    <button type="submit">
-        Confirm
-    </button>
-
-    <a href="{% url 'item_list' %}">
-        Cancel
-    </a>
+    <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-danger" type="submit">Confirmar</button>
+        <a class="btn btn-secondary" href="{% url 'item_list' %}">Cancelar</a>
+    </div>
 
 </form>
 
