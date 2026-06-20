@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<a class="btn" href="{% url 'item_create' %}">
+    New Item
+</a>
+
+<br><br>
+
+<table>
+
+    <tr>
+        <th>Name</th>
+        <th>Price</th>
+        <th>Quantity</th>
+        <th></th>
+    </tr>
+
+    {% for item in items %}
+
+    <tr>
+        <td>{{ item.name }}</td>
+        <td>${{ item.price }}</td>
+        <td>{{ item.quantity }}</td>
+
+        <td>
+            <a href="{% url 'item_update' item.id %}">Edit</a>
+            |
+            <a href="{% url 'item_delete' item.id %}">Delete</a>
+        </td>
+    </tr>
+
+    {% endfor %}
+
+</table>
+
+{% endblock %}
