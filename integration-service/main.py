@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 
-app = FastAPI()
+from routers.inventory import router as inventory_router
 
+app = FastAPI(
+    title="Integration Middleware"
+)
 
-@app.get("/")
-def root():
-    return {"status": "running"}
+app.include_router(inventory_router)
