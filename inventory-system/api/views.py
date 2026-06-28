@@ -13,3 +13,10 @@ class ItemViewSet(viewsets.ModelViewSet):
 	filter_backends = [filters.SearchFilter, filters.OrderingFilter]
 	search_fields = ['name', 'description']
 	ordering_fields = ['price', 'quantity', 'created_at']
+
+	def get_queryset(self):
+		queryset = Item.objects.all()
+		sku = self.request.query_params.get("sku")
+		if sku:
+			queryset = queryset.filter(sku=sku)
+		return queryset

@@ -9,7 +9,7 @@ class InventoryService:
 
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{settings.inventory_api}/api/items/"
+                f"{settings.inventory_api}"
             )
 
         response.raise_for_status()

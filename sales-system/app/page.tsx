@@ -12,13 +12,16 @@ type Sale = {
 type SaleForm = {
   productCode: string;
   quantity: number;
-  unitPrice: number;
 };
 
 const emptyForm: SaleForm = {
   productCode: "",
   quantity: 1,
-  unitPrice: 0,
+};
+
+type Feedback = {
+  type: "success" | "error";
+  message: string;
 };
 
 function formatCurrency(value: number) {
@@ -31,12 +34,9 @@ function formatCurrency(value: number) {
 export default function NewSalePage() {
   const [form, setForm] = useState<SaleForm>(emptyForm);
   const [sales, setSales] = useState<Sale[]>([]);
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const isEditing = editingId !== null;
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
 
   useEffect(() => {
     fetchSales();
@@ -44,14 +44,17 @@ export default function NewSalePage() {
 
   async function fetchSales() {
     setLoading(true);
-    setError(null);
+    setFeedback(null);
     try {
       const res = await fetch("/api/sales");
       if (!res.ok) throw new Error("Failed to load sales");
       const data = await res.json();
       setSales(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load sales");
+      setFeedback({
+        type: "error",
+        message: err instanceof Error ? err.message : "Failed to load sales",
+      });
     } finally {
       setLoading(false);
     }
@@ -59,60 +62,42 @@ export default function NewSalePage() {
 
   async function handleSubmit() {
     if (!form.productCode.trim()) {
-      setError("Product code is required");
+      setFeedback({ type: "error", message: "Product code is required" });
       return;
     }
 
     setSubmitting(true);
-    setError(null);
+    setFeedback(null);
     try {
-      const res = await fetch(
-        isEditing ? `/api/sales/${editingId}` : "/api/sales",
-        {
-          method: isEditing ? "PUT" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
-        }
-      );
-      if (!res.ok) throw new Error("Failed to save sale");
+      const res = await fetch("/api/sales", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
 
-      resetForm();
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setFeedback({
+          type: "error",
+          message: data.message ?? "Failed to register sale",
+        });
+        return;
+      }
+
+      setFeedback({ type: "success", message: "Sale registered successfully!" });
+      setForm(emptyForm);
       await fetchSales();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save sale");
+      setFeedback({
+        type: "error",
+        message: err instanceof Error ? err.message : "Failed to register sale",
+      });
     } finally {
       setSubmitting(false);
     }
   }
 
-  async function handleDelete(id: string) {
-    setError(null);
-    try {
-      const res = await fetch(`/api/sales/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete sale");
-
-      if (editingId === id) resetForm();
-      await fetchSales();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete sale");
-    }
-  }
-
-  function handleEdit(sale: Sale) {
-    setEditingId(sale._id);
-    setForm({
-      productCode: sale.productCode,
-      quantity: sale.quantity,
-      unitPrice: sale.unitPrice,
-    });
-  }
-
-  function resetForm() {
-    setEditingId(null);
-    setForm(emptyForm);
-  }
-
-  const total = form.quantity * form.unitPrice;
   const grandTotal = sales.reduce(
     (acc, s) => acc + s.quantity * s.unitPrice,
     0
@@ -127,12 +112,10 @@ export default function NewSalePage() {
             Sales management
           </span>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-            {isEditing ? "Edit sale" : "Register a new sale"}
+            Register a new sale
           </h1>
           <p className="text-sm text-slate-500">
-            {isEditing
-              ? "Update the details below and save your changes."
-              : "Fill in the details below to register a new sale and track your records."}
+            Fill in the details below to register a new sale and track your records.
           </p>
         </div>
 
@@ -140,7 +123,7 @@ export default function NewSalePage() {
           {/* Form card */}
           <div className="h-fit rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/60">
             <h2 className="mb-5 text-sm font-semibold uppercase tracking-wide text-slate-400">
-              {isEditing ? "Editing entry" : "New entry"}
+              New entry
             </h2>
 
             <div className="space-y-5">
@@ -158,81 +141,41 @@ export default function NewSalePage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                    Quantity
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={form.quantity}
-                    onChange={(e) =>
-                      setForm({ ...form, quantity: Number(e.target.value) })
-                    }
-                    className="w-full rounded-lg border border-slate-300 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 transition focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                    Unit price
-                  </label>
-                  <div className="relative">
-                    <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-slate-400">
-                      $
-                    </span>
-                    <input
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      value={form.unitPrice}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          unitPrice: Number(e.target.value),
-                        })
-                      }
-                      className="w-full rounded-lg border border-slate-300 bg-slate-50/50 py-2.5 pl-7 pr-3.5 text-sm text-slate-900 transition focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-100"
-                    />
-                  </div>
-                </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                  Quantity
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  value={form.quantity}
+                  onChange={(e) =>
+                    setForm({ ...form, quantity: Number(e.target.value) })
+                  }
+                  className="w-full rounded-lg border border-slate-300 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 transition focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-100"
+                />
               </div>
 
-              <div className="flex items-center justify-between rounded-xl bg-indigo-50/70 px-4 py-3 text-sm">
-                <span className="font-medium text-indigo-700">Total</span>
-                <span className="text-base font-semibold text-indigo-900">
-                  {formatCurrency(total)}
-                </span>
-              </div>
-
-              {error && (
-                <p className="rounded-lg border border-red-100 bg-red-50 px-3.5 py-2.5 text-sm text-red-600">
-                  {error}
+              {feedback && (
+                <p
+                  className={`rounded-lg border px-3.5 py-2.5 text-sm ${
+                    feedback.type === "success"
+                      ? "border-green-100 bg-green-50 text-green-700"
+                      : "border-red-100 bg-red-50 text-red-600"
+                  }`}
+                >
+                  {feedback.message}
                 </p>
               )}
 
-              <div className="flex gap-3 pt-1">
+              <div className="pt-1">
                 <button
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="inline-flex flex-1 items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 active:bg-indigo-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex w-full items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 active:bg-indigo-800 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {submitting
-                    ? "Saving..."
-                    : isEditing
-                    ? "Save changes"
-                    : "Create sale"}
+                  {submitting ? "Saving..." : "Create sale"}
                 </button>
-
-                {isEditing && (
-                  <button
-                    onClick={resetForm}
-                    className="inline-flex items-center justify-center rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
-                  >
-                    Cancel
-                  </button>
-                )}
               </div>
             </div>
           </div>
@@ -276,9 +219,6 @@ export default function NewSalePage() {
                       <th className="px-5 py-3 font-semibold">Qty</th>
                       <th className="px-5 py-3 font-semibold">Unit price</th>
                       <th className="px-5 py-3 font-semibold">Total</th>
-                      <th className="px-5 py-3 text-right font-semibold">
-                        Actions
-                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -296,22 +236,6 @@ export default function NewSalePage() {
                         </td>
                         <td className="px-5 py-3.5 font-medium text-slate-900">
                           {formatCurrency(sale.quantity * sale.unitPrice)}
-                        </td>
-                        <td className="px-5 py-3.5">
-                          <div className="flex justify-end gap-2">
-                            <button
-                              onClick={() => handleEdit(sale)}
-                              className="rounded-md px-2.5 py-1 text-sm font-medium text-indigo-600 transition hover:bg-indigo-50"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDelete(sale._id)}
-                              className="rounded-md px-2.5 py-1 text-sm font-medium text-red-500 transition hover:bg-red-50"
-                            >
-                              Delete
-                            </button>
-                          </div>
                         </td>
                       </tr>
                     ))}
